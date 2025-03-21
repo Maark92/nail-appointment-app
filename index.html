@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Appuntamenti Onicotecnica</title>
+  <style>
+    :root {
+      --primary-color: #f06292;
+      --primary-light: #ffb4c1;
+      --primary-dark: #ba2d65;
+      --accent-color: #9c27b0;
+      --text-color: #333;
+      --bg-color: #fff5f8;
+      --card-color: #ffffff;
+      --border-radius: 12px;
+      --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: var(--transition);
+      padding-bottom: 70px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    header {
+      text-align: center;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+    }
+    
+    header h1 {
+      color: var(--primary-dark);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    header p {
+      color: var(--text-color);
+      opacity: 0.8;
+    }
+    
+    .tab-container {
+      display: flex;
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    
+    .tab-button {
+      flex: 1;
+      padding: 1rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-color);
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .tab-button.active {
+      color: var(--primary-color);
+    }
+    
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--primary-color);
+    }
+    
+    .tab-content {
+      display: none;
+      background-color: var(--card-color);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    button:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background-color: #9e9e9e;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #757575;
+    }
+    
+    .calendar {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: 600;
+      padding: 0.5rem;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      padding: 0.5rem;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1/1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .calendar-day:hover {
+      background-color: var(--primary-light);
+    }
+    
+    .calendar-day.today {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: 600;
+    }
+    
+    .calendar-day.selected {
+      background-color: var(--accent-color);
+      color: white;
+      font-weight: 600;
+    }
+    
+    .calendar-day.has-appointment::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      width: 5px;
+      height: 5px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+    }
+    
+    .appointment-list {
+      margin-top: 1.5rem;
+    }
+    
+    .appointment-card {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      transition: var(--transition);
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .appointment-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .appointment-time {
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .appointment-client {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .appointment-notes {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 0.5rem;
+    }
+    
+    .appointment-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    .appointment-actions button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+    }
+    
+    .navbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--card-color);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.75rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-color);
+      opacity: 0.6;
+      transition: var(--transition);
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+      opacity: 1;
+    }
+    
+    .nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .nav-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal-content {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 500px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-color);
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .notes-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    
+    .note-card {
+      background-color: var(--card-color);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      position: relative;
+      border-top: 4px solid var(--primary-color);
+    }
+    
+    .note-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .note-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary-dark);
+    }
+    
+    .note-date {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+    
+    .note-content {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      white-space: pre-wrap;
+    }
+    
+    .note-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+    
+    .note-actions button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+    }
+    
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      z-index: 900;
+      transition: var(--transition);
+    }
+    
+    .fab:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: #757575;
+    }
+    
+    .empty-state p {
+      margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.75rem;
+      }
+      
+      .calendar-day {
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 0.75rem;
+      }
+      
+      header {
+        padding: 1rem 0;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .tab-button {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+      }
+      
+      .calendar-days, .calendar-grid {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Beauty Nails</h1>
+      <p>Gestione Appuntamenti Onicotecnica</p>
+    </header>
+    
+    <div class="tab-content active" id="appointments-tab">
+      <div class="calendar">
+        <div class="calendar-header">
+          <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+          <h3 id="current-month">Marzo 2025</h3>
+          <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="calendar-days">
+          <div>Lun</div>
+          <div>Mar</div>
+          <div>Mer</div>
+          <div>Gio</div>
+          <div>Ven</div>
+          <div>Sab</div>
+          <div>Dom</div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Calendar days will be generated here -->
+        </div>
+      </div>
+      
+      <div class="appointment-list" id="appointment-list">
+        <!-- Appointments will be loaded here -->
+        <div class="empty-state" id="empty-appointments">
+          <p>Nessun appuntamento per la data selezionata.</p>
+          <button onclick="openAppointmentModal()">Aggiungi appuntamento</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="notes-tab">
+      <div class="notes-container" id="notes-container">
+        <!-- Notes will be loaded here -->
+        <div class="empty-state" id="empty-notes">
+          <p>Non hai ancora creato appunti.</p>
+          <button onclick="openNoteModal()">Crea appunto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Appointment Modal -->
+  <div class="modal" id="appointment-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="appointment-modal-title">Nuovo Appuntamento</h3>
+        <button class="close-button" onclick="closeAppointmentModal()">&times;</button>
+      </div>
+      <form id="appointment-form">
+        <input type="hidden" id="appointment-id">
+        <div class="form-group">
+          <label for="appointment-date">Data</label>
+          <input type="date" id="appointment-date" required>
+        </div>
+        <div class="form-group">
+          <label for="appointment-time">Orario</label>
+          <input type="time" id="appointment-time" required>
+        </div>
+        <div class="form-group">
+          <label for="appointment-client">Nome Cliente</label>
+          <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
+        </div>
+        <div class="form-group">
+          <label for="appointment-treatment">Trattamento</label>
+          <select id="appointment-treatment" required>
+            <option value="">Seleziona trattamento</option>
+            <option value="Manicure Base">Manicure Base</option>
+            <option value="Semipermanente">Semipermanente</option>
+            <option value="Ricostruzione">Ricostruzione</option>
+            <option value="Refill">Refill</option>
+            <option value="Nail Art">Nail Art</option>
+            <option value="Altro">Altro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="appointment-notes">Note Aggiuntive</label>
+          <textarea id="appointment-notes" rows="3" placeholder="Inserisci note aggiuntive..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeAppointmentModal()">Annulla</button>
+          <button type="submit">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Note Modal -->
+  <div class="modal" id="note-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="note-modal-title">Nuovo Appunto</h3>
+        <button class="close-button" onclick="closeNoteModal()">&times;</button>
+      </div>
+      <form id="note-form">
+        <input type="hidden" id="note-id">
+        <div class="form-group">
+          <label for="note-title">Titolo</label>
+          <input type="text" id="note-title" placeholder="Inserisci il titolo" required>
+        </div>
+        <div class="form-group">
+          <label for="note-content">Contenuto</label>
+          <textarea id="note-content" rows="6" placeholder="Inserisci il contenuto dell'appunto..." required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeNoteModal()">Annulla</button>
+          <button type="submit">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div class="modal" id="confirmation-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Conferma eliminazione</h3>
+        <button class="close-button" onclick="closeConfirmationModal()">&times;</button>
+      </div>
+      <p>Sei sicuro di voler eliminare questo elemento?</p>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeConfirmationModal()">Annulla</button>
+        <button onclick="confirmDelete()">Elimina</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Floating Action Button -->
+  <div class="fab" id="add-fab">
+    <i class="fas fa-plus"></i>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <div class="navbar">
+    <div class="nav-item active" data-tab="appointments-tab">
+      <i class="nav-icon fas fa-calendar-alt"></i>
+      <span class="nav-label">Appuntamenti</span>
+    </div>
+    <div class="nav-item" data-tab="notes-tab">
+      <i class="nav-icon fas fa-sticky-note"></i>
+      <span class="nav-label">Appunti</span>
+    </div>
+  </div>
+  
+  <script>
+    // Costanti e variabili globali
+    const APPOINTMENTS_STORAGE_KEY = 'nail_app_appointments';
+    const NOTES_STORAGE_KEY = 'nail_app_notes';
+    let appointments = [];
+    let notes = [];
+    let selectedDate = new Date();
+    let deletingItemId = null;
+    let deletingItemType = null;
+    
+    // Element selectors
+    const appointmentsTab = document.getElementById('appointments-tab');
+    const notesTab = document.getElementById('notes-tab');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const currentMonthLabel = document.getElementById('current-month');
+    const appointmentList = document.getElementById('appointment-list');
+    const notesContainer = document.getElementById('notes-container');
+    const emptyAppointments = document.getElementById('empty-appointments');
+    const emptyNotes = document.getElementById('empty-notes');
+    const addFab = document.getElementById('add-fab');
+    
+    // Modali
+    const appointmentModal = document.getElementById('appointment-modal');
+    const noteModal = document.getElementById('note-modal');
+    const confirmationModal = document.getElementById('confirmation-modal');
+    
+    // Funzione di inizializzazione dell'app
+    function initApp() {
+      // Carica i dati dal localStorage
+      loadAppointments();
+      loadNotes();
+      
+      // Inizializza il calendario
+      renderCalendar();
+      
+      // Visualizza gli appuntamenti per la data attuale
+      renderAppointmentsForSelectedDate();
+      
+      // Visualizza gli appunti
+      renderNotes();
+      
+      // Gestione eventi
+      setupEventListeners();
+    }
+    
+    // Carica gli appuntamenti dal localStorage
+    function loadAppointments() {
+      const storedAppointments = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
+      if (storedAppointments) {
+        appointments = JSON.parse(storedAppointments);
+        // Converte le stringhe date in oggetti Date
+        appointments.forEach(appointment => {
+          appointment.date = new Date(appointment.date);
+        });
+      }
+    }
+    
+    // Carica gli appunti dal localStorage
+    function loadNotes() {
+      const storedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+      if (storedNotes) {
+        notes = JSON.parse(storedNotes);
+      }
+    }
+    
+    // Salva gli appuntamenti nel localStorage
+    function saveAppointments() {
+      localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(appointments));
+    }
+    
+    // Salva gli appunti nel localStorage
+    function saveNotes() {
+      localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+    }
+    
+    // Genera il calendario per il mese corrente
+    function renderCalendar() {
+      calendarGrid.innerHTML = '';
+      
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      
+      // Aggiorna l'intestazione del mese
+      const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+      currentMonthLabel.textContent = `${monthNames[month]} ${year}`;
+      
+      // Ottieni il primo giorno del mese (0 = Domenica, 1 = Lunedì, ...)
+      const firstDay = new Date(year, month, 1).getDay();
+      // Adatta per iniziare da lunedì (0 = Lunedì, 6 = Domenica)
+      const firstDayAdjusted = firstDay === 0 ? 6 : firstDay - 1;
+      
+      // Ottieni l'ultimo giorno del mese
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      
+      // Ottieni l'ultimo giorno del mese precedente
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      
+      // Celle per i giorni del mese precedente
+      for (let i = 0; i < firstDayAdjusted; i++) {
+        const day = prevMonthLastDay - firstDayAdjusted + i + 1;
+        const dateCell = document.createElement('div');
+        dateCell.classList.add('calendar-day');
+        dateCell.style.opacity = '0.3';
+        dateCell.textContent = day;
+        calendarGrid.appendChild(dateCell);
+      }
+      
+      // Celle per i giorni del mese corrente
+      const today = new Date();
+      for (let i = 1; i <= lastDay; i++) {
+        const dateCell = document.createElement('div');
+        dateCell.classList.add('calendar-day');
+        dateCell.textContent = i;
+        
+        // Verifica se è oggi
+        if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+          dateCell.classList.add('today');
+        }
+        
+        // Verifica se è la data selezionata
+        if (year === selectedDate.getFullYear() && month === selectedDate.getMonth() && i === selectedDate.getDate()) {
+          dateCell.classList.add('selected');
+        }
+        
+        // Verifica se ci sono appuntamenti per questa data
+        const currentDate = new Date(year, month, i);
+        const hasAppointments = appointments.some(appointment => 
+          appointment.date.getFullYear() === currentDate.getFullYear() &&
+          appointment.date.getMonth() === currentDate.getMonth() &&
+          appointment.date.getDate() === currentDate.getDate()
+        );
+        
+        if (hasAppointments) {
+          dateCell.classList.add('has-appointment');
+        }
+        
+        // Aggiungi evento click
+        dateCell.addEventListener('click', () => {
+          // Rimuovi la classe selezionata da tutte le celle
+          document.querySelectorAll('.calendar-day').forEach(cell => {
+            cell.classList.remove('selected');
+          });
+          
+          // Aggiungi la classe selezionata a questa cella
+          dateCell.classList.add('selected');
+          
+          // Aggiorna la data selezionata
+          selectedDate = new Date(year, month, i);
+          
+          // Mostra gli appuntamenti per questa data
+          renderAppointmentsForSelectedDate();
+        });
+        
+        calendarGrid.appendChild(dateCell);
+      }
+      
+      // Calcola il numero di celle necessarie per completare la griglia (7x6)
+      const totalCells = 42;
+      const remainingCells = totalCells - (firstDayAdjusted + lastDay);
+      
+      // Celle per i giorni del mese successivo
+      for (let i = 1; i <= remainingCells; i++) {
+        const dateCell = document.createElement('div');
+        dateCell.classList.add('calendar-day');
+        dateCell.style.opacity = '0.3';
+        dateCell.textContent = i;
+        calendarGrid.appendChild(dateCell);
+      }
+    }
+    
+    // Mostra gli appuntamenti per la data selezionata
+    function renderAppointmentsForSelectedDate() {
+      // Filtra gli appuntamenti per la data selezionata
+      const filteredAppointments = appointments.filter(appointment => 
+        appointment.date.getFullYear() === selectedDate.getFullYear() &&
+        appointment.date.getMonth() === selectedDate.getMonth() &&
+        appointment.date.getDate() === selectedDate.getDate()
+      );
+      
+      // Ordina gli appuntamenti per orario
+      filteredAppointments.sort((a, b) => {
+        return a.time.localeCompare(b.time);
+      });
+      
+      // Aggiorna la lista degli appuntamenti
+      if (filteredAppointments.length > 0) {
+        appointmentList.innerHTML = '';
+        emptyAppointments.style.display = 'none';
+        
+        filteredAppointments.forEach(appointment => {
+          const appointmentCard = document.createElement('div');
+          appointmentCard.classList.add('appointment-card');
+          
+          const formattedDate = formatDate(appointment.date);
+          
+          appointmentCard.innerHTML = `
+            <div class="appointment-time">${appointment.time} - ${formattedDate}</div>
+            <div class="appointment-client">${appointment.client}</div>
+            <div class="appointment-treatment">${appointment.treatment}</div>
+            ${appointment.notes ? `<div class="appointment-notes">${appointment.notes}</div>` : ''}
+            <div class="appointment-actions">
+              <button onclick="editAppointment('${appointment.id}')">Modifica</button>
+              <button class="btn-secondary" onclick="deleteItem('${appointment.id}', 'appointment')">Elimina</button>
+            </div>
+          `;
+          
+          appointmentList.appendChild(appointmentCard);
+        });
+      } else {
+        appointmentList.innerHTML = '';
+        emptyAppointments.style.display = 'block';
+      }
+    }
+    
+    // Mostra gli appunti
+    function renderNotes() {
+      if (notes.length > 0) {
+        notesContainer.innerHTML = '';
+        emptyNotes.style.display = 'none';
+        
+        notes.forEach(note => {
+          const noteCard = document.createElement('div');
+          noteCard.classList.add('note-card');
+          
+          const formattedDate = new Date(note.date).toLocaleDateString('it-IT', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+          
+        noteCard.innerHTML = `
+          <div class="note-title">${note.title}</div>
+          <div class="note-date">${formattedDate}</div>
+          <div class="note-content">${note.content}</div>
+          <div class="note-actions">
+            <button onclick="editNote('${note.id}')">Modifica</button>
+            <button class="btn-secondary" onclick="deleteItem('${note.id}', 'note')">Elimina</button>
+          </div>
+        `;
+        
+        notesContainer.appendChild(noteCard);
+      });
+    } else {
+      notesContainer.innerHTML = '';
+      emptyNotes.style.display = 'block';
+    }
+  }
+  
+  // Funzione per formattare la data in formato italiano
+  function formatDate(date) {
+    return date.toLocaleDateString('it-IT', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    });
+  }
+  
+  // Imposta gli event listener
+  function setupEventListeners() {
+    // Navigazione mese precedente
+    document.getElementById('prev-month').addEventListener('click', () => {
+      selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1);
+      renderCalendar();
+    });
+    
+    // Navigazione mese successivo
+    document.getElementById('next-month').addEventListener('click', () => {
+      selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1);
+      renderCalendar();
+    });
+    
+    // Navigazione tra le tab
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        // Rimuovi la classe active da tutte le tab
+        document.querySelectorAll('.nav-item').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        
+        // Rimuovi la classe active da tutti i contenuti delle tab
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Aggiungi la classe active alla tab cliccata
+        item.classList.add('active');
+        
+        // Mostra il contenuto della tab selezionata
+        const tabId = item.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
+        
+        // Aggiorna il comportamento del FAB
+        updateFabFunction();
+      });
+    });
+    
+    // Floating Action Button
+    addFab.addEventListener('click', () => {
+      // Apri la modale appropriata in base alla tab attiva
+      if (document.getElementById('appointments-tab').classList.contains('active')) {
+        openAppointmentModal();
+      } else if (document.getElementById('notes-tab').classList.contains('active')) {
+        openNoteModal();
+      }
+    });
+    
+    // Form appuntamento
+    document.getElementById('appointment-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveAppointmentForm();
+    });
+    
+    // Form appunto
+    document.getElementById('note-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveNoteForm();
+    });
+  }
+  
+  // Aggiorna la funzione del FAB in base alla tab attiva
+  function updateFabFunction() {
+    if (document.getElementById('appointments-tab').classList.contains('active')) {
+      addFab.querySelector('i').className = 'fas fa-calendar-plus';
+    } else if (document.getElementById('notes-tab').classList.contains('active')) {
+      addFab.querySelector('i').className = 'fas fa-plus';
+    }
+  }
+  
+  // Apri la modale per un nuovo appuntamento
+  function openAppointmentModal(date = selectedDate) {
+    // Reset del form
+    document.getElementById('appointment-form').reset();
+    document.getElementById('appointment-id').value = '';
+    document.getElementById('appointment-modal-title').textContent = 'Nuovo Appuntamento';
+    
+    // Imposta la data selezionata
+    const dateString = date.toISOString().split('T')[0];
+    document.getElementById('appointment-date').value = dateString;
+    
+    // Mostra la modale
+    appointmentModal.style.display = 'flex';
+  }
+  
+  // Chiudi la modale dell'appuntamento
+  function closeAppointmentModal() {
+    appointmentModal.style.display = 'none';
+  }
+  
+  // Apri la modale per un nuovo appunto
+  function openNoteModal() {
+    // Reset del form
+    document.getElementById('note-form').reset();
+    document.getElementById('note-id').value = '';
+    document.getElementById('note-modal-title').textContent = 'Nuovo Appunto';
+    
+    // Mostra la modale
+    noteModal.style.display = 'flex';
+  }
+  
+  // Chiudi la modale dell'appunto
+  function closeNoteModal() {
+    noteModal.style.display = 'none';
+  }
+  
+  // Apri la modale di conferma eliminazione
+  function deleteItem(id, type) {
+    deletingItemId = id;
+    deletingItemType = type;
+    confirmationModal.style.display = 'flex';
+  }
+  
+  // Chiudi la modale di conferma eliminazione
+  function closeConfirmationModal() {
+    confirmationModal.style.display = 'none';
+    deletingItemId = null;
+    deletingItemType = null;
+  }
+  
+  // Conferma eliminazione
+  function confirmDelete() {
+    if (deletingItemType === 'appointment') {
+      // Rimuovi l'appuntamento
+      appointments = appointments.filter(appointment => appointment.id !== deletingItemId);
+      saveAppointments();
+      renderCalendar();
+      renderAppointmentsForSelectedDate();
+    } else if (deletingItemType === 'note') {
+      // Rimuovi l'appunto
+      notes = notes.filter(note => note.id !== deletingItemId);
+      saveNotes();
+      renderNotes();
+    }
+    
+    closeConfirmationModal();
+  }
+  
+  // Modifica appuntamento
+  function editAppointment(id) {
+    const appointment = appointments.find(appointment => appointment.id === id);
+    if (appointment) {
+      document.getElementById('appointment-id').value = appointment.id;
+      document.getElementById('appointment-date').value = appointment.date.toISOString().split('T')[0];
+      document.getElementById('appointment-time').value = appointment.time;
+      document.getElementById('appointment-client').value = appointment.client;
+      document.getElementById('appointment-treatment').value = appointment.treatment;
+      document.getElementById('appointment-notes').value = appointment.notes || '';
+      
+      document.getElementById('appointment-modal-title').textContent = 'Modifica Appuntamento';
+      appointmentModal.style.display = 'flex';
+    }
+  }
+  
+  // Modifica appunto
+  function editNote(id) {
+    const note = notes.find(note => note.id === id);
+    if (note) {
+      document.getElementById('note-id').value = note.id;
+      document.getElementById('note-title').value = note.title;
+      document.getElementById('note-content').value = note.content;
+      
+      document.getElementById('note-modal-title').textContent = 'Modifica Appunto';
+      noteModal.style.display = 'flex';
+    }
+  }
+  
+  // Salva il form dell'appuntamento
+  function saveAppointmentForm() {
+    const id = document.getElementById('appointment-id').value || generateId();
+    const dateStr = document.getElementById('appointment-date').value;
+    const time = document.getElementById('appointment-time').value;
+    const client = document.getElementById('appointment-client').value;
+    const treatment = document.getElementById('appointment-treatment').value;
+    const notes = document.getElementById('appointment-notes').value;
+    
+    // Crea un oggetto appuntamento
+    const appointment = {
+      id,
+      date: new Date(dateStr),
+      time,
+      client,
+      treatment,
+      notes
+    };
+    
+    // Aggiorna o aggiungi l'appuntamento
+    const index = appointments.findIndex(app => app.id === id);
+    if (index !== -1) {
+      appointments[index] = appointment;
+    } else {
+      appointments.push(appointment);
+    }
+    
+    // Salva gli appuntamenti e aggiorna la UI
+    saveAppointments();
+    renderCalendar();
+    renderAppointmentsForSelectedDate();
+    closeAppointmentModal();
+  }
+  
+  // Salva il form dell'appunto
+  function saveNoteForm() {
+    const id = document.getElementById('note-id').value || generateId();
+    const title = document.getElementById('note-title').value;
+    const content = document.getElementById('note-content').value;
+    
+    // Crea un oggetto appunto
+    const note = {
+      id,
+      title,
+      content,
+      date: new Date()
+    };
+    
+    // Aggiorna o aggiungi l'appunto
+    const index = notes.findIndex(n => n.id === id);
+    if (index !== -1) {
+      note.date = notes[index].date; // Mantieni la data originale
+      notes[index] = note;
+    } else {
+      notes.push(note);
+    }
+    
+    // Salva gli appunti e aggiorna la UI
+    saveNotes();
+    renderNotes();
+    closeNoteModal();
+  }
+  
+  // Genera un ID unico
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  }
+  
+  // Inizializza l'app
+  document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
