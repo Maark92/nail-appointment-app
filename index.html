@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestione Appuntamenti Onicotecnica</title>
+  <title>Gestione Appuntamenti Sabrina</title>
   <style>
     :root {
       --primary-color: #f06292;
@@ -24,13 +24,25 @@
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    
+    .bg-gradient {
+      background: linear-gradient(to bottom, #f8bbd0, #f48fb1);
+  }
+  
+  .bg-floral {
+      background: url('https://www.toptal.com/designers/subtlepatterns/uploads/floral-white.png') repeat;
+  }
+  
+  .bg-elegant {
+      background: #000000;
+      color: rgb(196, 79, 165);
+  }
+  
     body {
-      background-color: var(--bg-color);
+      background: linear-gradient(to bottom, #f8bbd0, #f48fb1); /* Sfumatura rosa */
+      background-attachment: fixed;
       color: var(--text-color);
-      transition: var(--transition);
-      padding-bottom: 70px;
-    }
+  }
+  
     
     .container {
       max-width: 800px;
@@ -484,15 +496,51 @@
       .calendar-days, .calendar-grid {
         font-size: 0.85rem;
       }
+      .gallery-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .gallery-item {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .gallery-item img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .delete-photo {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+  
     }
   </style>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Beauty Nails</h1>
-      <p>Gestione Appuntamenti Onicotecnica</p>
+      <h1>Sabry</h1>
+      <p>Gestione Appuntamenti Sabrina</p>
     </header>
     
     <div class="tab-content active" id="appointments-tab">
@@ -524,7 +572,33 @@
         </div>
       </div>
     </div>
-    
+    <div class="tab-content" id="gallery-tab">
+      <h2>Galleria Foto</h2>
+      <input type="file" id="photo-upload" accept="image/*">
+      <button onclick="uploadPhoto()">Carica Foto</button>
+      <div class="gallery-container" id="gallery-container"></div>
+  </div>
+
+  
+    <div class="tab-content" id="stats-tab">
+      <h2>Statistiche</h2>
+      <div class="stats-container">
+          <p><strong>Totale Appuntamenti:</strong> <span id="total-appointments">0</span></p>
+          <p><strong>Cliente più frequente:</strong> <span id="top-client">N/A</span></p>
+          <p><strong>Trattamento più richiesto:</strong> <span id="top-treatment">N/A</span></p>
+      </div>
+  </div>
+  
+  <div class="tab-content" id="settings-tab">
+    <h2>Impostazioni</h2>
+    <label for="background-select">Scegli lo sfondo:</label>
+    <select id="background-select" onchange="changeBackground()">
+        <option value="gradient">Sfumatura Rosa</option>
+        <option value="floral">Floreale</option>
+        <option value="elegant">Elegante Nero</option>
+    </select>
+</div>
+
     <div class="tab-content" id="notes-tab">
       <div class="notes-container" id="notes-container">
         <!-- Notes will be loaded here -->
@@ -555,8 +629,18 @@
         </div>
         <div class="form-group">
           <label for="appointment-client">Nome Cliente</label>
-          <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
+                  <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
         </div>
+        <div class="form-group">
+          <label for="appointment-phone">Telefono</label>
+          <input type="tel" id="appointment-phone" placeholder="Inserisci il numero di telefono">
+      </div>
+      
+      <div class="form-group">
+          <label for="appointment-email">Email</label>
+          <input type="email" id="appointment-email" placeholder="Inserisci l'email del cliente">
+      </div>
+      
         <div class="form-group">
           <label for="appointment-treatment">Trattamento</label>
           <select id="appointment-treatment" required>
@@ -636,7 +720,20 @@
       <i class="nav-icon fas fa-sticky-note"></i>
       <span class="nav-label">Appunti</span>
     </div>
+    <div class="nav-item" data-tab="stats-tab">
+      <i class="nav-icon fas fa-chart-bar"></i>
+      <span class="nav-label">Statistiche</span>
   </div>
+  <div class="nav-item" data-tab="gallery-tab">
+    <i class="nav-icon fas fa-images"></i>
+    <span class="nav-label">Galleria</span>
+</div>
+
+<div class="nav-item" data-tab="settings-tab">
+  <i class="nav-icon fas fa-cog"></i>
+  <span class="nav-label">Impostazioni</span>
+</div>
+
   
   <script>
     // Costanti e variabili globali
@@ -1069,6 +1166,9 @@
     const dateStr = document.getElementById('appointment-date').value;
     const time = document.getElementById('appointment-time').value;
     const client = document.getElementById('appointment-client').value;
+    const phone = document.getElementById('appointment-phone').value;
+const email = document.getElementById('appointment-email').value;
+
     const treatment = document.getElementById('appointment-treatment').value;
     const notes = document.getElementById('appointment-notes').value;
     
@@ -1078,9 +1178,12 @@
       date: new Date(dateStr),
       time,
       client,
+      phone,  // ← Salva il telefono
+      email,  // ← Salva l'email
       treatment,
       notes
-    };
+  };
+  
     
     // Aggiorna o aggiungi l'appuntamento
     const index = appointments.findIndex(app => app.id === id);
@@ -1130,7 +1233,186 @@
   function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
   }
+// Controlla e mostra le notifiche per appuntamenti imminenti
+function checkUpcomingAppointments() {
+  if (!("Notification" in window)) {
+      console.log("Le notifiche non sono supportate dal browser.");
+      return;
+  }
+
+  // Chiedi il permesso di inviare notifiche se non è già stato concesso
+  if (Notification.permission !== "granted") {
+      Notification.requestPermission().then(permission => {
+          if (permission !== "granted") {
+              console.log("Permesso notifiche negato.");
+          }
+      });
+  }
+
+  const now = new Date();
+  const upcomingAppointments = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      const appointmentTime = appointment.time.split(":");
+      appointmentDate.setHours(appointmentTime[0], appointmentTime[1]);
+
+      // Mostra una notifica se l'appuntamento è nelle prossime 2 ore
+      return appointmentDate - now > 0 && appointmentDate - now <= 2 * 60 * 60 * 1000;
+  });
+
+  upcomingAppointments.forEach(appointment => {
+      new Notification("Promemoria Appuntamento", {
+          body: `Hai un appuntamento con ${appointment.client} alle ${appointment.time}`,
+          icon: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+      });
+  });
+}
+
+// Controlla gli appuntamenti ogni minuto
+setInterval(checkUpcomingAppointments, 60000);
+
+// Aggiorna le statistiche sugli appuntamenti
+function updateStats() {
+  const totalAppointments = appointments.length;
+  document.getElementById('total-appointments').textContent = totalAppointments;
+
+  if (totalAppointments === 0) {
+      document.getElementById('top-client').textContent = "N/A";
+      document.getElementById('top-treatment').textContent = "N/A";
+      return;
+  }
+
+  // Conta i clienti più frequenti
+  const clientCounts = {};
+  const treatmentCounts = {};
+
+  appointments.forEach(appointment => {
+      clientCounts[appointment.client] = (clientCounts[appointment.client] || 0) + 1;
+      treatmentCounts[appointment.treatment] = (treatmentCounts[appointment.treatment] || 0) + 1;
+  });
+
+  const topClient = Object.keys(clientCounts).reduce((a, b) => clientCounts[a] > clientCounts[b] ? a : b);
+  const topTreatment = Object.keys(treatmentCounts).reduce((a, b) => treatmentCounts[a] > treatmentCounts[b] ? a : b);
+
+  document.getElementById('top-client').textContent = topClient;
+  document.getElementById('top-treatment').textContent = topTreatment;
+}
+
+// Chiama `updateStats` ogni volta che vengono aggiunti/eliminati appuntamenti
+setInterval(updateStats, 5000);
+// Simula l'invio di un'email o di un SMS
+function sendReminder(appointment) {
+  if (!appointment.phone && !appointment.email) return;
+
+  const message = `Ciao ${appointment.client}, ti ricordiamo il tuo appuntamento il ${formatDate(appointment.date)} alle ${appointment.time}.`;
+
+  if (appointment.email) {
+      console.log(`📧 Email inviata a ${appointment.email}: ${message}`);
+      alert(`Email di promemoria inviata a ${appointment.email}`);
+  }
+
+  if (appointment.phone) {
+      console.log(`📱 SMS inviato a ${appointment.phone}: ${message}`);
+      alert(`SMS di promemoria inviato a ${appointment.phone}`);
+  }
+}
+
+// Controlla e invia i promemoria un'ora prima dell'appuntamento
+function checkReminders() {
+  const now = new Date();
+  appointments.forEach(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      const appointmentTime = appointment.time.split(":");
+      appointmentDate.setHours(appointmentTime[0], appointmentTime[1]);
+
+      const diff = appointmentDate - now;
+      if (diff > 0 && diff <= 60 * 60 * 1000) { // Un'ora prima
+          sendReminder(appointment);
+      }
+  });
+}
+
+// Controlla ogni 5 minuti se ci sono promemoria da inviare
+setInterval(checkReminders, 5 * 60 * 1000);
+const GALLERY_STORAGE_KEY = 'nail_app_gallery';
+let galleryPhotos = [];
+
+// Carica le foto dalla memoria
+function loadGallery() {
+    const storedPhotos = localStorage.getItem(GALLERY_STORAGE_KEY);
+    if (storedPhotos) {
+        galleryPhotos = JSON.parse(storedPhotos);
+        renderGallery();
+    }
+}
+
+// Salva le foto in memoria
+function saveGallery() {
+    localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryPhotos));
+}
+
+// Mostra le foto nella galleria
+function renderGallery() {
+    const galleryContainer = document.getElementById('gallery-container');
+    galleryContainer.innerHTML = '';
+
+    galleryPhotos.forEach((photo, index) => {
+        const photoElement = document.createElement('div');
+        photoElement.classList.add('gallery-item');
+
+        photoElement.innerHTML = `
+            <img src="${photo}" alt="Nail Art">
+            <button class="delete-photo" onclick="deletePhoto(${index})">×</button>
+        `;
+
+        galleryContainer.appendChild(photoElement);
+    });
+}
+
+// Carica una nuova foto
+function uploadPhoto() {
+    const fileInput = document.getElementById('photo-upload');
+    const file = fileInput.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            galleryPhotos.push(e.target.result);
+            saveGallery();
+            renderGallery();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Elimina una foto dalla galleria
+function deletePhoto(index) {
+    galleryPhotos.splice(index, 1);
+    saveGallery();
+    renderGallery();
+}
+
+// Carica la galleria quando la pagina si apre
+document.addEventListener('DOMContentLoaded', loadGallery);
+
+ // Cambia lo sfondo in base alla scelta dell'utente
+function changeBackground() {
+  const selectedBackground = document.getElementById('background-select').value;
+  document.body.className = ''; // Reset classi
+  document.body.classList.add(`bg-${selectedBackground}`);
   
+  // Salva la preferenza nel localStorage
+  localStorage.setItem('selectedBackground', selectedBackground);
+}
+
+// Carica lo sfondo salvato all'avvio dell'app
+document.addEventListener('DOMContentLoaded', () => {
+  const savedBackground = localStorage.getItem('selectedBackground');
+  if (savedBackground) {
+      document.body.classList.add(`bg-${savedBackground}`);
+      document.getElementById('background-select').value = savedBackground;
+  }
+});
+
   // Inizializza l'app
   document.addEventListener('DOMContentLoaded', initApp);
 </script>
