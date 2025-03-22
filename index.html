@@ -562,6 +562,29 @@
     gap: 0.5rem;
 }
 
+@media (max-width: 480px) {
+  .navbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem;
+  }
+
+  .nav-item {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      opacity: 1;
+  }
+
+  .nav-icon {
+      font-size: 1.2rem; /* Riduce la dimensione delle icone */
+  }
+
+  .nav-label {
+      display: none; /* Nasconde il testo sotto le icone per risparmiare spazio */
+  }
+}
+
   
     }
   </style>
@@ -608,31 +631,29 @@
     <div class="tab-content" id="clients-tab">
       <h2>Gestione Clienti</h2>
   
+      <div class="form-group">
+          <label for="client-name">Nome Cliente</label>
+          <input type="text" id="client-name" placeholder="Inserisci il nome">
+      </div>
+  
+      <div class="form-group">
+          <label for="client-phone">Telefono</label>
+          <input type="tel" id="client-phone" placeholder="Inserisci il numero di telefono">
+      </div>
+  
+      <div class="form-group">
+          <label for="client-email">Email</label>
+          <input type="email" id="client-email" placeholder="Inserisci l'email">
+      </div>
+  
+      <button id="save-client-btn" onclick="saveClient()">Salva Cliente</button>
 
-    
-  
-  <div class="form-group">
-      <label for="appointment-client">Nome Cliente</label>
-      <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
-  </div>
-  
-  <div class="form-group">
-      <label for="appointment-phone">Telefono</label>
-      <input type="tel" id="appointment-phone" placeholder="Inserisci il numero di telefono">
-  </div>
-  
-  <div class="form-group">
-      <label for="appointment-email">Email</label>
-      <input type="email" id="appointment-email" placeholder="Inserisci l'email del cliente">
-  </div>
-  
-    
-  
-      <button onclick="saveClient()">Salva Cliente</button>
   
       <h3>Lista Clienti</h3>
       <ul id="client-list"></ul>
   </div>
+          
+  
   
 
     <div class="tab-content" id="gallery-tab">
@@ -1570,13 +1591,12 @@ document.addEventListener('DOMContentLoaded', () => {
 const CLIENTS_STORAGE_KEY = 'nail_app_clients';
 let clients = [];
 
-// Carica i clienti salvati
+// Carica i clienti salvati dal LocalStorage
 function loadClients() {
     const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
-    if (storedClients) {
-        clients = JSON.parse(storedClients);
-        renderClients();
-    }
+    clients = storedClients ? JSON.parse(storedClients) : [];
+
+    renderClients(); // Mostra i clienti salvati
 }
 
 // Salva i clienti nel LocalStorage
@@ -1584,66 +1604,97 @@ function saveClients() {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
 }
 
-// Mostra la lista dei clienti
+// Mostra la lista dei clienti registrati
 function renderClients() {
-    const clientList = document.getElementById('client-list');
-    clientList.innerHTML = '';
+  const clientList = document.getElementById('client-list');
 
-    if (clients.length === 0) {
-        clientList.innerHTML = '<p>Nessun cliente registrato.</p>';
-        return;
-    }
+  if (!clientList) {
+      console.error("Errore: elemento client-list non trovato.");
+      return;
+  }
 
-    clients.forEach((client, index) => {
-        const clientElement = document.createElement('li');
-        clientElement.classList.add('client-card');
+  clientList.innerHTML = '';
 
-        clientElement.innerHTML = `
-            <div class="client-info">
-                <strong>${client.name}</strong><br>
-                📞 ${client.phone} <br>
-                ✉️ ${client.email}
-            </div>
-            <div class="client-actions">
-                <button onclick="viewClientAppointments('${client.name}')">Cronologia</button>
-                <button class="btn-secondary" onclick="deleteClient(${index})">Elimina</button>
-            </div>
-        `;
+  if (clients.length === 0) {
+      clientList.innerHTML = '<p>Nessun cliente registrato.</p>';
+      return;
+  }
 
-        clientList.appendChild(clientElement);
-    });
+  clients.forEach((client, index) => {
+      const clientElement = document.createElement('li');
+      clientElement.classList.add('client-card');
+
+      clientElement.innerHTML = `
+          <div class="client-info">
+              <strong>${client.name}</strong><br>
+              📞 ${client.phone || "N/A"} <br>
+              ✉️ ${client.email || "N/A"}
+          </div>
+          <div class="client-actions">
+              <button onclick="viewClientAppointments('${client.name}')">Cronologia</button>
+              <button class="btn-secondary" onclick="deleteClient(${index})">Elimina</button>
+          </div>
+      `;
+
+      clientList.appendChild(clientElement);
+  });
 }
+
+// Carica e mostra i clienti quando la pagina si apre
+document.addEventListener('DOMContentLoaded', () => {
+  loadClients();
+  renderClients();
+});
+
 
 // Salva un nuovo cliente
 function saveClient() {
-    const name = document.getElementById('client-name').value.trim();
-    const phone = document.getElementById('client-phone').value.trim();
-    const email = document.getElementById('client-email').value.trim();
+  // Recupera gli input direttamente, senza usare addEventListener
+  const nameInput = document.getElementById('client-name');
+  const phoneInput = document.getElementById('client-phone');
+  const emailInput = document.getElementById('client-email');
 
-    if (!name) {
-        alert("Inserisci il nome del cliente.");
-        return;
-    }
+  if (!nameInput || !phoneInput || !emailInput) {
+      console.error("Errore: Uno degli input non è stato trovato.");
+      return;
+  }
 
-    // Verifica se il cliente esiste già
-    const existingClient = clients.find(client => client.name.toLowerCase() === name.toLowerCase());
-    if (existingClient) {
-        alert("Questo cliente è già registrato.");
-        return;
-    }
+  const name = nameInput.value.trim();
+  const phone = phoneInput.value.trim();
+  const email = emailInput.value.trim();
 
-    // Aggiunge il nuovo cliente
-    clients.push({ name, phone, email });
-    saveClients();
-    renderClients();
+  if (!name) {
+      alert("Inserisci il nome del cliente.");
+      return;
+  }
 
-    // Pulisce i campi dopo il salvataggio
-    document.getElementById('client-name').value = '';
-    document.getElementById('client-phone').value = '';
-    document.getElementById('client-email').value = '';
+  // Carica i clienti esistenti dal LocalStorage
+  const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+  let clients = storedClients ? JSON.parse(storedClients) : [];
+
+  // Verifica se il cliente esiste già
+  const existingClient = clients.find(client => client.name.toLowerCase() === name.toLowerCase());
+  if (existingClient) {
+      alert("Questo cliente è già registrato.");
+      return;
+  }
+
+  // Aggiunge il nuovo cliente alla lista
+  clients.push({ name, phone, email });
+  localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
+
+  renderClients(); // Mostra i clienti aggiornati
+
+  // Pulisce i campi dopo il salvataggio
+  nameInput.value = '';
+  phoneInput.value = '';
+  emailInput.value = '';
+
+  console.log("Cliente salvato:", name, phone, email); // Debug
 }
 
-// Elimina un cliente
+
+// Elimina un cliente dalla lista
 function deleteClient(index) {
     clients.splice(index, 1);
     saveClients();
@@ -1652,6 +1703,7 @@ function deleteClient(index) {
 
 // Carica i clienti all'avvio
 document.addEventListener('DOMContentLoaded', loadClients);
+
 
 
 // Mostra la cronologia appuntamenti di un cliente
@@ -1689,37 +1741,57 @@ function loadClientsForAppointments() {
   });
 }
 
-// Riempie i dettagli del cliente quando viene selezionato dal menu a tendina
+// Riempie automaticamente i dettagli del cliente selezionato
 function fillClientDetails() {
   const selectedName = document.getElementById('appointment-client-select').value;
+  
+  if (!selectedName) return;
+
+  loadClients(); // Ricarica la lista clienti prima di cercare il nome
+
   const client = clients.find(c => c.name === selectedName);
 
   if (client) {
       document.getElementById('appointment-client').value = client.name;
       document.getElementById('appointment-phone').value = client.phone;
       document.getElementById('appointment-email').value = client.email;
-  } else {
-      document.getElementById('appointment-client').value = '';
-      document.getElementById('appointment-phone').value = '';
-      document.getElementById('appointment-email').value = '';
   }
 }
 
+
+
 // Chiama la funzione ogni volta che si apre il form appuntamenti
 function openAppointmentModal(date = selectedDate) {
-  document.getElementById('appointment-form').reset();
   document.getElementById('appointment-id').value = '';
   document.getElementById('appointment-modal-title').textContent = 'Nuovo Appuntamento';
 
   const dateString = date.toISOString().split('T')[0];
   document.getElementById('appointment-date').value = dateString;
 
-  // 🔹 AGGIUNGI QUESTA RIGA 🔹
-  loadClientsForAppointments();
+  loadClientsForAppointments(); // Ricarica i clienti nel menu a tendina senza cancellare i dati
 
   appointmentModal.style.display = 'flex';
 }
 
+// Mostra il bottone "Salva Cliente" solo nella sezione "Gestione Clienti"
+document.addEventListener('DOMContentLoaded', () => {
+  const saveClientBtn = document.getElementById('save-client-btn');
+  const clientsTab = document.getElementById('clients-tab');
+
+  if (saveClientBtn && clientsTab) {
+      saveClientBtn.style.display = 'none'; // Nasconde il bottone all'inizio
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', () => {
+              if (item.getAttribute('data-tab') === 'clients-tab') {
+                  saveClientBtn.style.display = 'block'; // Mostra il bottone solo in "Gestione Clienti"
+              } else {
+                  saveClientBtn.style.display = 'none'; // Nasconde il bottone nelle altre sezioni
+              }
+          });
+      });
+  }
+});
 
 
   // Inizializza l'app
