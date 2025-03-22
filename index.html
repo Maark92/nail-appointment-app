@@ -497,14 +497,17 @@
         font-size: 0.85rem;
       }
       .gallery-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: 10px;
+        justify-content: center;
         margin-top: 20px;
     }
     
     .gallery-item {
         position: relative;
+        width: 150px;
+        height: 150px;
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -512,8 +515,8 @@
     
     .gallery-item img {
         width: 100%;
-        height: auto;
-        display: block;
+        height: 100%;
+        object-fit: cover;
     }
     
     .delete-photo {
@@ -529,12 +532,36 @@
         font-size: 12px;
         cursor: pointer;
     }
+    
     .modal-content {
       max-height: 90vh; /* Limita l'altezza della modale */
       overflow-y: auto; /* Abilita lo scrolling */
       padding-bottom: 20px;
   }
   
+  .client-card {
+    background-color: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.client-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.client-info {
+    margin-bottom: 0.5rem;
+}
+
+.client-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
   
     }
   </style>
@@ -577,12 +604,51 @@
         </div>
       </div>
     </div>
+   
+    <div class="tab-content" id="clients-tab">
+      <h2>Gestione Clienti</h2>
+  
+
+    
+  
+  <div class="form-group">
+      <label for="appointment-client">Nome Cliente</label>
+      <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
+  </div>
+  
+  <div class="form-group">
+      <label for="appointment-phone">Telefono</label>
+      <input type="tel" id="appointment-phone" placeholder="Inserisci il numero di telefono">
+  </div>
+  
+  <div class="form-group">
+      <label for="appointment-email">Email</label>
+      <input type="email" id="appointment-email" placeholder="Inserisci l'email del cliente">
+  </div>
+  
+    
+  
+      <button onclick="saveClient()">Salva Cliente</button>
+  
+      <h3>Lista Clienti</h3>
+      <ul id="client-list"></ul>
+  </div>
+  
+
     <div class="tab-content" id="gallery-tab">
       <h2>Galleria Foto</h2>
+      
+      <div class="form-group">
+          <label for="photo-client">Seleziona Cliente:</label>
+          <select id="photo-client"></select>
+      </div>
+  
       <input type="file" id="photo-upload" accept="image/*">
       <button onclick="uploadPhoto()">Carica Foto</button>
-      <div class="gallery-container" id="gallery-container"></div>
+  
+      <div id="gallery-container"></div>
   </div>
+  
 
   
     <div class="tab-content" id="stats-tab">
@@ -632,6 +698,21 @@
           <label for="appointment-time">Orario</label>
           <input type="time" id="appointment-time" required>
         </div>
+
+        <div class="form-group">
+          <label for="appointment-client-select">Seleziona Cliente</label>
+          <select id="appointment-client-select" onchange="fillClientDetails()">
+              <option value="">Seleziona un cliente...</option>
+          </select>
+      </div>
+                
+          
+      <div class="form-group">
+          <label for="appointment-email">Email</label>
+          <input type="email" id="appointment-email" placeholder="Inserisci l'email del cliente">
+      </div>
+      
+
         <div class="form-group">
           <label for="appointment-client">Nome Cliente</label>
                   <input type="text" id="appointment-client" placeholder="Inserisci il nome del cliente" required>
@@ -641,11 +722,7 @@
           <input type="tel" id="appointment-phone" placeholder="Inserisci il numero di telefono">
       </div>
       
-      <div class="form-group">
-          <label for="appointment-email">Email</label>
-          <input type="email" id="appointment-email" placeholder="Inserisci l'email del cliente">
-      </div>
-      
+           
         <div class="form-group">
           <label for="appointment-treatment">Trattamento</label>
           <select id="appointment-treatment" required>
@@ -737,6 +814,11 @@
 <div class="nav-item" data-tab="settings-tab">
   <i class="nav-icon fas fa-cog"></i>
   <span class="nav-label">Impostazioni</span>
+</div>
+
+<div class="nav-item" data-tab="clients-tab">
+  <i class="nav-icon fas fa-user"></i>
+  <span class="nav-label">Clienti</span>
 </div>
 
   
@@ -1176,7 +1258,8 @@ const email = document.getElementById('appointment-email').value;
 
     const treatment = document.getElementById('appointment-treatment').value;
     const notes = document.getElementById('appointment-notes').value;
-    
+   
+
     // Crea un oggetto appuntamento
     const appointment = {
       id,
@@ -1202,6 +1285,7 @@ const email = document.getElementById('appointment-email').value;
     saveAppointments();
     renderCalendar();
     renderAppointmentsForSelectedDate();
+    updateClientsList(); // Aggiorna il menu clienti dopo aver salvato un appuntamento
     closeAppointmentModal();
   }
   
@@ -1339,9 +1423,9 @@ function checkReminders() {
 // Controlla ogni 5 minuti se ci sono promemoria da inviare
 setInterval(checkReminders, 5 * 60 * 1000);
 const GALLERY_STORAGE_KEY = 'nail_app_gallery';
-let galleryPhotos = [];
+let galleryPhotos = {};
 
-// Carica le foto dalla memoria
+// Carica le foto salvate
 function loadGallery() {
     const storedPhotos = localStorage.getItem(GALLERY_STORAGE_KEY);
     if (storedPhotos) {
@@ -1350,38 +1434,59 @@ function loadGallery() {
     }
 }
 
-// Salva le foto in memoria
+// Salva la galleria nel LocalStorage
 function saveGallery() {
     localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryPhotos));
 }
 
-// Mostra le foto nella galleria
+// Mostra solo le foto del cliente selezionato
 function renderGallery() {
-    const galleryContainer = document.getElementById('gallery-container');
-    galleryContainer.innerHTML = '';
+  const galleryContainer = document.getElementById('gallery-container');
+  const selectedClient = document.getElementById('photo-client').value;
+  galleryContainer.innerHTML = '';
 
-    galleryPhotos.forEach((photo, index) => {
-        const photoElement = document.createElement('div');
-        photoElement.classList.add('gallery-item');
+  if (!selectedClient || !galleryPhotos[selectedClient] || galleryPhotos[selectedClient].length === 0) {
+      galleryContainer.innerHTML = '<p>Nessuna foto disponibile per questo cliente.</p>';
+      return;
+  }
 
-        photoElement.innerHTML = `
-            <img src="${photo}" alt="Nail Art">
-            <button class="delete-photo" onclick="deletePhoto(${index})">×</button>
-        `;
+  const clientPhotos = galleryPhotos[selectedClient];
 
-        galleryContainer.appendChild(photoElement);
-    });
+  clientPhotos.forEach((photo, index) => {
+      const photoElement = document.createElement('div');
+      photoElement.classList.add('gallery-item');
+
+      photoElement.innerHTML = `
+          <img src="${photo}" alt="Nail Art">
+          <button class="delete-photo" onclick="deletePhoto('${selectedClient}', ${index})">×</button>
+      `;
+
+      galleryContainer.appendChild(photoElement);
+  });
 }
 
-// Carica una nuova foto
+// Aggiorna la galleria quando cambia il cliente selezionato
+document.getElementById('photo-client').addEventListener('change', renderGallery);
+
+
+// Carica una nuova foto per un cliente
 function uploadPhoto() {
     const fileInput = document.getElementById('photo-upload');
+    const clientName = document.getElementById('photo-client').value;
     const file = fileInput.files[0];
+
+    if (!clientName) {
+        alert("Seleziona un cliente prima di caricare una foto.");
+        return;
+    }
 
     if (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
-            galleryPhotos.push(e.target.result);
+            if (!galleryPhotos[clientName]) {
+                galleryPhotos[clientName] = [];
+            }
+            galleryPhotos[clientName].push(e.target.result);
             saveGallery();
             renderGallery();
         };
@@ -1389,12 +1494,56 @@ function uploadPhoto() {
     }
 }
 
-// Elimina una foto dalla galleria
-function deletePhoto(index) {
-    galleryPhotos.splice(index, 1);
+// Elimina una foto di un cliente
+function deletePhoto(client, index) {
+    galleryPhotos[client].splice(index, 1);
+    if (galleryPhotos[client].length === 0) {
+        delete galleryPhotos[client];
+    }
     saveGallery();
     renderGallery();
 }
+
+// Carica la lista dei clienti dal LocalStorage
+// Carica la lista dei clienti dal LocalStorage e aggiorna il menu a tendina
+function loadClientsForGallery() {
+  const clientSelect = document.getElementById('photo-client');
+  clientSelect.innerHTML = '<option value="">Seleziona un cliente</option>';
+
+  let appointments = [];
+  const storedAppointments = localStorage.getItem('nail_app_appointments');
+  if (storedAppointments) {
+      appointments = JSON.parse(storedAppointments);
+  }
+
+  const uniqueClients = [...new Set(appointments.map(app => app.client))];
+
+  if (uniqueClients.length === 0) {
+      const noClientsOption = document.createElement('option');
+      noClientsOption.value = "";
+      noClientsOption.textContent = "Nessun cliente disponibile";
+      clientSelect.appendChild(noClientsOption);
+  } else {
+      uniqueClients.forEach(client => {
+          const option = document.createElement('option');
+          option.value = client;
+          option.textContent = client;
+          clientSelect.appendChild(option);
+      });
+  }
+}
+
+// Aggiorna il menu clienti ogni volta che si aggiunge un nuovo appuntamento
+function updateClientsList() {
+  loadClientsForGallery();
+}
+
+// Carica la galleria e i clienti quando la pagina si apre
+document.addEventListener('DOMContentLoaded', () => {
+  loadGallery();
+  loadClientsForGallery();
+});
+
 
 // Carica la galleria quando la pagina si apre
 document.addEventListener('DOMContentLoaded', loadGallery);
@@ -1417,6 +1566,161 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('background-select').value = savedBackground;
   }
 });
+
+const CLIENTS_STORAGE_KEY = 'nail_app_clients';
+let clients = [];
+
+// Carica i clienti salvati
+function loadClients() {
+    const storedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+    if (storedClients) {
+        clients = JSON.parse(storedClients);
+        renderClients();
+    }
+}
+
+// Salva i clienti nel LocalStorage
+function saveClients() {
+    localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
+}
+
+// Mostra la lista dei clienti
+function renderClients() {
+    const clientList = document.getElementById('client-list');
+    clientList.innerHTML = '';
+
+    if (clients.length === 0) {
+        clientList.innerHTML = '<p>Nessun cliente registrato.</p>';
+        return;
+    }
+
+    clients.forEach((client, index) => {
+        const clientElement = document.createElement('li');
+        clientElement.classList.add('client-card');
+
+        clientElement.innerHTML = `
+            <div class="client-info">
+                <strong>${client.name}</strong><br>
+                📞 ${client.phone} <br>
+                ✉️ ${client.email}
+            </div>
+            <div class="client-actions">
+                <button onclick="viewClientAppointments('${client.name}')">Cronologia</button>
+                <button class="btn-secondary" onclick="deleteClient(${index})">Elimina</button>
+            </div>
+        `;
+
+        clientList.appendChild(clientElement);
+    });
+}
+
+// Salva un nuovo cliente
+function saveClient() {
+    const name = document.getElementById('client-name').value.trim();
+    const phone = document.getElementById('client-phone').value.trim();
+    const email = document.getElementById('client-email').value.trim();
+
+    if (!name) {
+        alert("Inserisci il nome del cliente.");
+        return;
+    }
+
+    // Verifica se il cliente esiste già
+    const existingClient = clients.find(client => client.name.toLowerCase() === name.toLowerCase());
+    if (existingClient) {
+        alert("Questo cliente è già registrato.");
+        return;
+    }
+
+    // Aggiunge il nuovo cliente
+    clients.push({ name, phone, email });
+    saveClients();
+    renderClients();
+
+    // Pulisce i campi dopo il salvataggio
+    document.getElementById('client-name').value = '';
+    document.getElementById('client-phone').value = '';
+    document.getElementById('client-email').value = '';
+}
+
+// Elimina un cliente
+function deleteClient(index) {
+    clients.splice(index, 1);
+    saveClients();
+    renderClients();
+}
+
+// Carica i clienti all'avvio
+document.addEventListener('DOMContentLoaded', loadClients);
+
+
+// Mostra la cronologia appuntamenti di un cliente
+function viewClientAppointments(clientName) {
+    const storedAppointments = localStorage.getItem('nail_app_appointments');
+    if (!storedAppointments) {
+        alert("Nessun appuntamento trovato.");
+        return;
+    }
+
+    const appointments = JSON.parse(storedAppointments);
+    const clientAppointments = appointments.filter(app => app.client === clientName);
+
+    if (clientAppointments.length === 0) {
+        alert(`Nessun appuntamento trovato per ${clientName}.`);
+    } else {
+        let message = `📅 Appuntamenti di ${clientName}:\n`;
+        clientAppointments.forEach(app => {
+            message += `• ${app.date} - ${app.time} (${app.treatment})\n`;
+        });
+        alert(message);
+    }
+}
+
+// Carica i clienti nel menu a tendina quando si apre il form appuntamenti
+function loadClientsForAppointments() {
+  const clientSelect = document.getElementById('appointment-client-select');
+  clientSelect.innerHTML = '<option value="">Seleziona un cliente...</option>';
+
+  clients.forEach(client => {
+      const option = document.createElement('option');
+      option.value = client.name;
+      option.textContent = client.name;
+      clientSelect.appendChild(option);
+  });
+}
+
+// Riempie i dettagli del cliente quando viene selezionato dal menu a tendina
+function fillClientDetails() {
+  const selectedName = document.getElementById('appointment-client-select').value;
+  const client = clients.find(c => c.name === selectedName);
+
+  if (client) {
+      document.getElementById('appointment-client').value = client.name;
+      document.getElementById('appointment-phone').value = client.phone;
+      document.getElementById('appointment-email').value = client.email;
+  } else {
+      document.getElementById('appointment-client').value = '';
+      document.getElementById('appointment-phone').value = '';
+      document.getElementById('appointment-email').value = '';
+  }
+}
+
+// Chiama la funzione ogni volta che si apre il form appuntamenti
+function openAppointmentModal(date = selectedDate) {
+  document.getElementById('appointment-form').reset();
+  document.getElementById('appointment-id').value = '';
+  document.getElementById('appointment-modal-title').textContent = 'Nuovo Appuntamento';
+
+  const dateString = date.toISOString().split('T')[0];
+  document.getElementById('appointment-date').value = dateString;
+
+  // 🔹 AGGIUNGI QUESTA RIGA 🔹
+  loadClientsForAppointments();
+
+  appointmentModal.style.display = 'flex';
+}
+
+
 
   // Inizializza l'app
   document.addEventListener('DOMContentLoaded', initApp);
